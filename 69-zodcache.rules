@@ -1,0 +1,8 @@
+SUBSYSTEM!="block", GOTO="zodcache_end"
+ACTION=="remove", GOTO="zodcache_end"
+ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}=="1", GOTO="zodcache_end"
+KERNEL=="fd*|sr*", GOTO="zodcache_end"
+
+RUN+="zcstart --udev $tempnode"
+
+LABEL="zodcache_end"
