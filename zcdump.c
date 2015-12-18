@@ -1,3 +1,19 @@
+/*
+ * Copyright 2015 Ian Pilcher <arequipeno@gmail.com>
+ *
+ * This program is free software.  You can redistribute it or modify it under
+ * the terms of version 2 of the GNU General Public License (GPL), as published
+ * by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY -- without even the implied warranties of MERCHANTIBILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the test of the GPL for more details.
+ *
+ * Version 2 of the GNU General Public License is available at:
+ *
+ *   http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+ */
+
 #include <inttypes.h>
 #include <stdlib.h>
 #include <unistd.h>
