@@ -1,4 +1,4 @@
-# zodcache
-A mechanism for autostarting dm-cache devices
+# *** DO NOT USE THIS ***
+## This code is looked upon with disfavor by the device mapper development community.
 
-See https://github.com/ipilcher/zodcache/blob/master/readme.pdf
+Old README at https://github.com/ipilcher/zodcache/blob/master/readme.pdf
