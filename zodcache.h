@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Ian Pilcher <arequipeno@gmail.com>
+ * Copyright 2015, 2016 Ian Pilcher <arequipeno@gmail.com>
  *
  * This program is free software.  You can redistribute it or modify it under
  * the terms of version 2 of the GNU General Public License (GPL), as published
@@ -83,6 +83,7 @@ _Bool zc_sb_v0_check(const struct zc_sb_v0 *sb, issue_cb_t issue_cb,
 _Bool zc_sb_v0_is_valid(const struct zc_sb_v0 *sb);
 char *zc_size_format(uint64_t size, _Bool verbose);
 int zc_block_size_parse(const char *s, uint64_t *block_size);
+int zc_size_parse(const char *s, uint64_t *size);
 const char *zc_cache_mode_format(uint64_t cache_mode, _Bool quiet);
 int zc_cache_mode_parse(const char *s, uint64_t *cache_mode);
 const char *zc_uuid_format(const uint8_t uuid[16], char buf[ZC_UUID_BUF_SIZE]);

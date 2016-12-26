@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Ian Pilcher <arequipeno@gmail.com>
+ * Copyright 2015, 2016 Ian Pilcher <arequipeno@gmail.com>
  *
  * This program is free software.  You can redistribute it or modify it under
  * the terms of version 2 of the GNU General Public License (GPL), as published
@@ -545,7 +545,7 @@ static _Bool zc_block_size_parse_cb(char *const issue, void *const context)
 	return 0;
 }
 
-int zc_block_size_parse(const char *const s, uint64_t *const block_size)
+int zc_size_parse(const char *const s, uint64_t *const out)
 {
 	long size, unit;
 	char *p;
@@ -572,17 +572,14 @@ int zc_block_size_parse(const char *const s, uint64_t *const block_size)
 		goto parse_error;
 
 	if (size >= LONG_MAX / unit) {
-		p = "Block size larger than 1 GiB (1073741824 bytes)";
+		p = "Block size too large";
 		p = zc_strdup(p);
 		goto invalid_size;
 	}
 
 	size *= unit;
 
-	if (!zc_block_size_check((uint64_t)size, zc_block_size_parse_cb, &p))
-		goto invalid_size;
-
-	*block_size = (uint64_t)size;
+	*out = (uint64_t)size;
 	return 0;
 
 invalid_size:
@@ -593,6 +590,22 @@ invalid_size:
 parse_error:
 	zc_err(LOG_WARNING, "Invalid block size: %s\n", s);
 	return -1;
+}
+
+int zc_block_size_parse(const char *const s, uint64_t *const block_size)
+{
+	char *p;
+
+	if (zc_size_parse(s, block_size) < 0)
+		return -1;
+
+	if (!zc_block_size_check(*block_size, zc_block_size_parse_cb, &p)) {
+		zc_err(LOG_WARNING, "Invalid block size: %s: %s\n", s, p);
+		free(p);
+		return -1;
+	}
+
+	return 0;
 }
 
 static const char *const zc_cache_modes[] = {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Ian Pilcher <arequipeno@gmail.com>
+ * Copyright 2015, 2016 Ian Pilcher <arequipeno@gmail.com>
  *
  * This program is free software.  You can redistribute it or modify it under
  * the terms of version 2 of the GNU General Public License (GPL), as published
@@ -69,6 +69,7 @@ struct component_dev {
 
 static uint64_t block_size = 256 * 1024;
 static uint64_t cache_mode = ZC_SB_MODE_WRITEBACK;
+static uint64_t alignment = 4 * 1024;
 
 static struct component_dev origin_dev = { .path = NULL };
 static struct component_dev cache_dev = { .path = NULL };
@@ -147,6 +148,31 @@ static int parse_block_size(int argc, char *argv[], int i)
 	return i;
 }
 
+static int parse_alignment(int argc, char *argv[], int i)
+{
+	++i;
+
+	if (i >= argc) {
+		fprintf(stderr, "Alignment (%s) value missing\n", argv[i - 1]);
+		exit(EXIT_FAILURE);
+	}
+
+	if (zc_size_parse(argv[i], &alignment) < 0)
+		exit(EXIT_FAILURE);
+
+	if (alignment < 4096) {
+		fprintf(stderr, "Alignment (%s) too small\n", argv[i]);
+		exit(EXIT_FAILURE);
+	}
+
+	if ((alignment & (alignment - 1)) != 0) {
+		fprintf(stderr, "Alignment (%s) not a power of 2\n", argv[i]);
+		exit(EXIT_FAILURE);
+	}
+
+	return i;
+}
+
 static int parse_cache_mode(int argc, char *argv[], int i)
 {
 	++i;
@@ -174,6 +200,7 @@ static void parse_args(int argc, char *argv[])
 		{ "-m", parse_metadata_dev },
 		{ "-b", parse_block_size },
 		{ "-M", parse_cache_mode },
+		{ "-a", parse_alignment },
 		{ NULL, 0 }
 	};
 
