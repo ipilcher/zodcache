@@ -28,8 +28,6 @@
 
 #include "zodcache.h"
 
-#define ZC_SB_RSVD_SIZE		4096
-
 static uint64_t combined_cache_size(uint64_t available, uint64_t block_size)
 {
 	uint64_t cache_size;
@@ -245,7 +243,7 @@ static void set_origin_sb(const uint8_t *const uuid)
 	zc_sb_v0_uuid_set(uuid, &origin_sb);
 	origin_sb.block_size = block_size;
 	origin_sb.cache_mode = cache_mode;
-	origin_sb.o_offset = ZC_SB_RSVD_SIZE;
+	origin_sb.o_offset = alignment;
 	origin_sb.o_size = origin_dev.size;
 
 	origin_sb.cksum = zc_sb_v0_cksum(&origin_sb);
@@ -263,7 +261,7 @@ static void set_cache_sb_separate(const uuid_t uuid)
 	zc_sb_v0_uuid_set(uuid, &cache_sb);
 	cache_sb.block_size = block_size;
 	cache_sb.cache_mode = cache_mode;
-	cache_sb.c_offset = ZC_SB_RSVD_SIZE;
+	cache_sb.c_offset = alignment;
 	cache_sb.c_size = cache_dev.size;
 
 	cache_sb.cksum = zc_sb_v0_cksum(&cache_sb);
@@ -281,7 +279,7 @@ static void set_metadata_sb(const uuid_t uuid)
 	zc_sb_v0_uuid_set(uuid, &metadata_sb);
 	metadata_sb.block_size = block_size;
 	metadata_sb.cache_mode = cache_mode;
-	metadata_sb.md_offset = ZC_SB_RSVD_SIZE;
+	metadata_sb.md_offset = alignment;
 	metadata_sb.md_size = metadata_dev.size;
 
 	metadata_sb.cksum = zc_sb_v0_cksum(&metadata_sb);
@@ -299,7 +297,7 @@ static void set_cache_sb_combined(const uuid_t uuid)
 	zc_sb_v0_uuid_set(uuid, &cache_sb);
 	cache_sb.block_size = block_size;
 	cache_sb.cache_mode = cache_mode;
-	cache_sb.md_offset = ZC_SB_RSVD_SIZE;
+	cache_sb.md_offset = alignment;
 	cache_sb.md_size = metadata_dev.size;
 	cache_sb.c_offset = cache_sb.md_offset + cache_sb.md_size;
 	cache_sb.c_size = cache_dev.size;
@@ -315,10 +313,10 @@ int main(int argc, char *argv[])
 	parse_args(argc, argv);
 	uuid_generate(uuid);
 
-	origin_dev.size -= ZC_SB_RSVD_SIZE;
+	origin_dev.size -= alignment;
 	set_origin_sb(uuid);
 
-	cache_dev.size -= ZC_SB_RSVD_SIZE;
+	cache_dev.size -= alignment;
 
 	if (metadata_dev.path == NULL) {
 
@@ -331,7 +329,7 @@ int main(int argc, char *argv[])
 	}
 	else {
 		uint64_t nr_blocks = cache_dev.size / block_size;
-		metadata_dev.size -= ZC_SB_RSVD_SIZE;
+		metadata_dev.size -= alignment;
 		if (metadata_dev.size <	4 * 1024 * 1024 + 16 * nr_blocks) {
 			fputs("Metadata device too small\n", stderr);
 			exit(EXIT_FAILURE);
