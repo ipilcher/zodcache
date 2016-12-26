@@ -28,6 +28,55 @@
 
 #include "zodcache.h"
 
+static _Bool is_pow2(const uint64_t num)
+{
+	return (num != 0) && ((num & (num - 1)) == 0);
+}
+
+static uint64_t to_blocks(const uint64_t num, const uint64_t block_size)
+{
+	uint64_t mask;
+
+	assert(is_pow2(block_size));
+
+	mask = block_size - 1;
+
+	return (num + mask) & ~mask;
+}
+
+/*
+ * From cache_metadata_size.cc in
+ * https://github.com/jthornber/thin-provisioning-tools
+ */
+#define DM_CACHE_XACTION_OVERHEAD	4194304
+#define DM_CACHE_BYTES_PER_BLOCK	16
+#define DM_CACHE_HINT_OHEAD_PER_BLOCK	8
+#define DM_CACHE_MAX_HINT_WIDTH		4
+
+#define TOTAL_BYTES_PER_BLOCK	(DM_CACHE_BYTES_PER_BLOCK + \
+					DM_CACHE_HINT_OHEAD_PER_BLOCK + \
+					DM_CACHE_MAX_HINT_WIDTH)
+
+
+/* 8 MiB minimum from lvmcache(7) */
+#define DM_CACHE_METADATA_MIN		8388608
+
+static uint64_t metadata_size(const uint64_t num_cache_blocks)
+{
+	uint64_t size;
+
+	size = num_cache_blocks * TOTAL_BYTES_PER_BLOCK +
+						DM_CACHE_XACTION_OVERHEAD;
+
+	/* Round up to 512-byte sectors, if necessary */
+	size = to_blocks(size, 512);
+
+	if (size < DM_CACHE_METADATA_MIN)
+		size = DM_CACHE_METADATA_MIN;
+
+	return size;
+}
+
 static uint64_t combined_cache_size(uint64_t available, uint64_t block_size)
 {
 	uint64_t cache_size;
@@ -330,7 +379,7 @@ int main(int argc, char *argv[])
 	else {
 		uint64_t nr_blocks = cache_dev.size / block_size;
 		metadata_dev.size -= alignment;
-		if (metadata_dev.size <	4 * 1024 * 1024 + 16 * nr_blocks) {
+		if (metadata_dev.size <	metadata_size(nr_blocks)) {
 			fputs("Metadata device too small\n", stderr);
 			exit(EXIT_FAILURE);
 		}
