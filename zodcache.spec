@@ -1,7 +1,7 @@
 Name:		zodcache
 Summary:	Device mapper (dm-cache)-based block device caching
-Version:	0.0.1
-Release:	2%{?dist}
+Version:	0.0.2
+Release:	1%{?dist}
 URL:		https://github.com/ipilcher/zodcache
 Source:		%{name}-%{version}.tar.gz
 License:	GPLv2
@@ -44,6 +44,12 @@ rm -rf %{buildroot}
 %attr(0644,root,root) %doc LICENSE
 
 %changelog
+* Tue Dec 27 2016 Ian Pilcher <arequipeno@gmail.com> - 0.0.2-1
+- Fix metadata size calculation
+- Put metadata region at end of combined cache device
+- Add alignment (-a) option to mkzc
+- Change device names for easier LVM filtering
+
 * Thu Dec 17 2015 Ian Pilcher <arequipeno@gmail.com> - 0.0.1-2
 - Add dracut module
 
