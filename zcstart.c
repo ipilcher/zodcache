@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Ian Pilcher <arequipeno@gmail.com>
+ * Copyright 2015, 2016 Ian Pilcher <arequipeno@gmail.com>
  *
  * This program is free software.  You can redistribute it or modify it under
  * the terms of version 2 of the GNU General Public License (GPL), as published
@@ -60,7 +60,7 @@ static void do_component(const char *const dev, const char *const type,
 	struct dm_task *task;
 	char *name, *params;
 
-	name = zc_asprintf("zodcache-%s-%s", uuid, type);
+	name = zc_asprintf("zodcache-%s-%s", type, uuid);
 	params = zc_asprintf("%s %" PRIu64, dev, offset / 512);
 
 	if (		!(task = dm_task_create(DM_DEVICE_CREATE))	||
@@ -116,9 +116,9 @@ static void try_assemble(const struct zc_sb_v0 *const sb,
 	struct dm_task *task;
 	uint64_t o_size;
 
-	o_dev = zc_asprintf("/dev/mapper/zodcache-%s-origin", uuid);
-	c_dev = zc_asprintf("/dev/mapper/zodcache-%s-cache", uuid);
-	md_dev = zc_asprintf("/dev/mapper/zodcache-%s-metadata", uuid);
+	o_dev = zc_asprintf("/dev/mapper/zodcache-origin-%s", uuid);
+	c_dev = zc_asprintf("/dev/mapper/zodcache-cache-%s", uuid);
+	md_dev = zc_asprintf("/dev/mapper/zodcache-metadata-%s", uuid);
 
 	if (sb->type == ZC_SB_TYPE_ORIGIN) {
 		if (access(c_dev, F_OK) != 0 || access(md_dev, F_OK) != 0)
@@ -142,7 +142,7 @@ static void try_assemble(const struct zc_sb_v0 *const sb,
 	else
 		o_size = get_dev_size(o_dev);
 
-	name = zc_asprintf("zodcache-%s", uuid);
+	name = zc_asprintf("zodcache-device-%s", uuid);
 	params = zc_asprintf("%s %s %s %" PRIu64 " 1 %s default 0",
 			     md_dev, c_dev, o_dev, sb->block_size / 512,
 			     zc_cache_mode_format(sb->cache_mode, 0));
