@@ -28,6 +28,25 @@
 
 #include "zodcache.h"
 
+struct component_dev {
+	const char	*path;
+	uint64_t	size;
+	uint64_t	major;
+	int		fd;
+};
+
+static uint64_t block_size = 256 * 1024;
+static uint64_t cache_mode = ZC_SB_MODE_WRITEBACK;
+static uint64_t alignment = 4 * 1024;
+
+static struct component_dev origin_dev = { .path = NULL };
+static struct component_dev cache_dev = { .path = NULL };
+static struct component_dev metadata_dev = { .path = NULL };
+
+static struct zc_sb_v0 origin_sb;
+static struct zc_sb_v0 cache_sb;
+static struct zc_sb_v0 metadata_sb;
+
 static _Bool is_pow2(const uint64_t num)
 {
 	return (num != 0) && ((num & (num - 1)) == 0);
@@ -79,52 +98,32 @@ static uint64_t metadata_size(const uint64_t num_cache_blocks)
 
 static uint64_t combined_cache_size(uint64_t available, uint64_t block_size)
 {
-	uint64_t cache_size;
+	uint64_t cache_blocks, cache_bytes, combined_bytes, excess_blocks;
 
 	assert(block_size % 32768 == 0);	/* must be a multiple of 32KB */
 	assert(block_size >= 32768);		/* min block size 32KB */
 	assert(block_size <= 1073741824);	/* max block size 1GB */
 
-	/* cache_size = (available - 4MB) * block_size / (block_size + 16) */
+	cache_blocks = available / block_size;
 
-	/* min size (for 1 block) is 4MiB + 16 + block_size */
-	if (available < 4194304 + 16 + block_size) {
-		fprintf(stderr, "%d: available size too small\n", __LINE__);
-		exit(EXIT_FAILURE);
+	while (1) {
+
+		cache_bytes = to_blocks(cache_blocks * block_size, alignment);
+		combined_bytes = cache_bytes + metadata_size(cache_blocks);
+
+		if (combined_bytes <= available)
+			break;
+
+		excess_blocks = (combined_bytes - available + block_size - 1) /
+								block_size;
+		if (excess_blocks > 1)
+			--excess_blocks;
+
+		cache_blocks -= excess_blocks;
 	}
 
-	cache_size = available - 4194304;
-
-	if (cache_size >= UINT64_MAX / block_size) {
-		fprintf(stderr, "%d available size too large for block size\n",
-			__LINE__);
-		exit(EXIT_FAILURE);
-	}
-
-	cache_size *= block_size;
-	cache_size /= block_size + 16;
-
-	return (cache_size / block_size) * block_size;
+	return cache_bytes;
 }
-
-struct component_dev {
-	const char	*path;
-	uint64_t	size;
-	uint64_t	major;
-	int		fd;
-};
-
-static uint64_t block_size = 256 * 1024;
-static uint64_t cache_mode = ZC_SB_MODE_WRITEBACK;
-static uint64_t alignment = 4 * 1024;
-
-static struct component_dev origin_dev = { .path = NULL };
-static struct component_dev cache_dev = { .path = NULL };
-static struct component_dev metadata_dev = { .path = NULL };
-
-static struct zc_sb_v0 origin_sb;
-static struct zc_sb_v0 cache_sb;
-static struct zc_sb_v0 metadata_sb;
 
 static int parse_dev(int argc, char *argv[], int i, const char *type,
 		     struct component_dev *dev)
@@ -346,9 +345,11 @@ static void set_cache_sb_combined(const uuid_t uuid)
 	zc_sb_v0_uuid_set(uuid, &cache_sb);
 	cache_sb.block_size = block_size;
 	cache_sb.cache_mode = cache_mode;
-	cache_sb.md_offset = alignment;
+	//cache_sb.md_offset = alignment;
+	cache_sb.md_offset = alignment + cache_dev.size;
 	cache_sb.md_size = metadata_dev.size;
-	cache_sb.c_offset = cache_sb.md_offset + cache_sb.md_size;
+	//cache_sb.c_offset = cache_sb.md_offset + cache_sb.md_size;
+	cache_sb.c_offset = alignment;
 	cache_sb.c_size = cache_dev.size;
 
 	cache_sb.cksum = zc_sb_v0_cksum(&cache_sb);
