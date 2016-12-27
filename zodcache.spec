@@ -12,7 +12,7 @@ zodcache is a block device caching mechanism that uses device mapper
 (dm-cache).
 
 %prep
-%setup -q -n %{name}
+%setup -q
 
 %build
 gcc -O3 -Wall -Wextra -o mkzc mkzc.c lib.c -luuid
